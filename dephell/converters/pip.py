@@ -9,6 +9,7 @@ import attr
 from dephell_discover import Root as PackageRoot
 from dephell_links import DirLink, FileLink
 from pip._internal.req import parse_requirements
+from pip._internal.req.req_install import InstallRequirement
 
 # app
 from ..context_tools import chdir
@@ -37,6 +38,14 @@ except ImportError:
     except ImportError:
         # external
         from pip._internal.network.session import PipSession
+
+try:
+    # pip >= 20.2
+    from pip._internal.req.req_file import ParsedRequirement
+    from pip._internal.req.constructors import \
+        install_req_from_parsed_requirement
+except ImportError:
+    ParsedRequirement = None
 
 
 @attr.s()
@@ -98,8 +107,15 @@ class PIPConverter(BaseConverter):
             )
 
             deps = []
-            for req in reqs:
+            for ireq in reqs:
                 # https://github.com/pypa/pip/blob/master/src/pip/_internal/req/req_install.py
+                if isinstance(ireq, InstallRequirement):
+                    req = ireq
+                elif isinstance(ireq, ParsedRequirement):
+                    req = install_req_from_parsed_requirement(ireq)
+                else:
+                    raise Exception("Another internal API change, why do you "
+                                    "keep using internal APIs?")
                 if req.req is None:
                     req.req = SimpleNamespace(
                         name=req.link.url.split('/')[-1],

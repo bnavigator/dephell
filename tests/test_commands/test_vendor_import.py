@@ -16,7 +16,7 @@ from dephell.models import RootDependency
 @pytest.mark.skipif(IS_WINDOWS, reason='unsupported on windows')
 def test_patch_imports(temp_path: Path):
     (temp_path / 'project').mkdir()
-    (temp_path / 'project' / '__init__.py').write_text('import requests\nimport django')
+    (temp_path / 'project' / '__init__.py').write_text('import requests\nimport django\n')
     (temp_path / 'project' / 'vendor' / 'requests').mkdir(parents=True)
     (temp_path / 'project' / 'vendor' / 'requests' / '__init__.py').touch()
 
@@ -34,5 +34,5 @@ def test_patch_imports(temp_path: Path):
         output_path=temp_path / 'project' / 'vendor',
     )
 
-    expected = 'import project.vendor.requests as requests\nimport django'
+    expected = 'import project.vendor.requests as requests\nimport django\n'
     assert (temp_path / 'project' / '__init__.py').read_text() == expected
